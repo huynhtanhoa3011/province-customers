@@ -1,0 +1,39 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="frm-update">
+    <div id="updateModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Customer information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="frmUpdateCustomer">
+                        <fieldset class="row g-3">
+                            <div class="col-md-6">
+                                <label for="upFullName" class="form-label">Full name</label>
+                                <input type="text" class="form-control" id="upFullName" name="upFullName">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="upEmail" class="form-label">Email</label>
+                                <input type="text" class="form-control" id="upEmail" name="upEmail">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="upPhone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="upPhone" name="upPhone">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="upProvince" class="form-label">Province</label>
+                                <select class="form-select" id="upProvince"></select>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="btnUpdateCustomer" class="btn btn-outline-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>

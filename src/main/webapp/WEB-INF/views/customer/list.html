@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Customer management</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="/resource/css/bootstrap.css">
+    <link rel="stylesheet" href="/resource/font-awesome-4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/resource/css/sweetalert2.min.css">
+    <script type="text/javascript" src="/resource/js/sweetalert2.min.js"></script>
+    <script type="text/javascript" src="/resource/js/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="/resource/js/jquery.validate-1.19.3.min.js"></script>
+    <script type="text/javascript" src="/resource/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="/resource/css/style.css">
+    <script type="text/javascript" src="/resource/js/app.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="success-alert">
+
+    </div>
+    <div class="box-header">
+        <th:block th:replace="/customer/createForm :: frm-create"></th:block>
+    </div>
+    <div class="box-body">
+            <textarea style="display:none" id="template">
+                <tr id="tr_{0}">
+                    <td>{0}</td>
+                    <td><a href="/customer?action=view&id={0}">{1}</a></td>
+                    <td>{2}</td>
+                    <td>{3}</td>
+                    <td>{4}</td>
+                    <td>
+                        <a class="edit" data-id="{0}">
+                            <i class="fa fa-pencil-square-o fa-fw"></i>
+                            edit
+                        </a>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-outline-danger delete" data-id="{0}">
+                            <i class="fa fa-trash-o"></i>
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            </textarea>
+        <input type="hidden" id="currentRow"/>
+        <table id="orderItems" class="table table-hover" border="1">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>FullName</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Province</th>
+                <th></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<th:block th:replace="/customer/updateForm :: frm-update"></th:block>
+
+<script type="text/javascript" src="/resource/js/custom-validation.js"></script>
+
+<script>
+    let page = {
+        urls: {
+            getProvinces: App.RESOURCE_API,
+            getAllCustomers: App.BASE_URL_CUSTOMER,
+            getAllProvinces: App.BASE_URL_PROVINCE,
+            getAllDistrict : App.RESOURCE_API + '/district/',
+            getAllWard : App.RESOURCE_API + '/ward/',
+            getCustomer: App.BASE_URL_CUSTOMER + '/view/',
+            saveNew: App.BASE_URL_CUSTOMER,
+            saveEdit: App.BASE_URL_CUSTOMER,
+            deleteCustomer: App.BASE_URL_CUSTOMER
+        }
+    }
+
+    let customer = new Customer();
+    let template = jQuery.validator.format($.trim($("#template").val()));
+    let addRow = () => {
+        $("#orderItems tbody").append($(template(customer.id, customer.fullName, customer.email, customer.phone, customer.province_name)));
+    }
+
+    let getProvinces = () => {
+        return $.ajax({
+            type: "GET",
+            header: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            url: page.urls.getProvinces,
+        }).done((data) => {
+            console.log(data);
+            $('#frmCreateCustomer').find('#province').empty();
+            $.each(data.results,(index,item) => {
+                $("#frmCreateCustomer").find("#province").append(`<option value="${item.province_id}">${item.province_name}</option>`)
+            })
+        }).fail(function() {
+            App.showErrorAlert("An error occurred. Please try again later !");
+        });
+
+    }
+
+    function getDistrict(province_id){
+        return $.ajax({
+            type: "GET",
+            header: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            url: page.urls.getAllDistrict + province_id,
+        }).done((data) => {
+            $('#frmCreateCustomer').find('#province_d').empty();
+            $.each(data.results,(index,itemd) => {
+                $("#frmCreateCustomer").find("#province_d").append(`<option value="${itemd.district_id}">${itemd.district_name}</option>`)
+            })
+        }).fail(function() {
+            App.showErrorAlert("An error occurred. Please try again later !");
+        });
+    }
+
+    function getWard(district_id){
+        $.ajax({
+            type: "GET",
+            header: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            url: page.urls.getAllWard + district_id,
+        }).done((data) => {
+            $('#frmCreateCustomer').find('#province_w').empty();
+            $.each(data.results,(index,item) => {
+                $("#frmCreateCustomer").find("#province_w").append(`<option value="${item.ward_id}">${item.ward_name}</option>`)
+            })
+        }).fail(function() {
+            App.showErrorAlert("An error occurred. Please try again later !");
+        });
+    }
+
+    function getCustomers() {
+        // console.log('getCustomers');
+        console.log(page.urls.getAllCustomers);
+        $.ajax({
+            type : "GET",
+            url : page.urls.getAllCustomers,
+        }).done((data) => {
+
+            $.each(data,(i,item) => {
+                console.log("Customer: " + item.fullName)
+                customer = item;
+                addRow();
+            });
+        }).fail(function () {
+            App.showErrorAlert("An error occurred. Please try again later !");
+        });
+    }
+
+    function createCustomer() {
+        customer.fullName = $("#fullName").val();
+        customer.email = $("#email").val();
+        customer.phone = $("#phone").val();
+        customer.province_name =  $("#province option:selected").text();
+        delete customer.id;
+        // console.log(customer)
+
+        $.ajax({
+            type: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            url: page.urls.saveNew,
+            data: JSON.stringify(customer)
+        }).done((resp) => {
+            // console.log(resp);
+            customer = resp;
+            addRow();
+            App.showSuccessAlert("Successful data generation !");
+        }).fail(function() {
+            App.showErrorAlert("An error occurred. Please try again later !");
+        });
+
+        $('#frmCreateCustomer')[0].reset();
+        $("#frmCreateCustomer").validate().resetForm();
+    }
+
+    function showUpdateModal() {
+        $.ajax({
+            type: "GET",
+            url: page.urls.getCustomer + customer.id,
+            // data: { id: customer.id },
+        }).done((resp) => {
+            $.ajax({
+                type: "GET",
+                header: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                url: page.urls.getProvinces,
+            }).done((data) => {
+                $('#frmUpdateCustomer').find('#upProvince').empty();
+                $.each(data.results,(index,item) => {
+                    $("#frmUpdateCustomer").find("#upProvince").append(`<option value="${item.province_id}">${item.province_name}</option>`)
+                    if(resp.province_name === item.province_name){
+                        $('#upProvince').val(item.province_id);
+                    }
+                })
+
+                $("#upFullName").val(resp.fullName);
+                $("#upEmail").val(resp.email);
+                $("#upPhone").val(resp.phone);
+
+                $('#updateModal').modal('toggle');
+            }).fail(function() {
+                App.showErrorAlert("An error occurred. Please try again later !");
+            });
+
+        }).fail(function() {
+            App.showErrorAlert("An error occurred. Please try again later !");
+        });
+    }
+
+    // function assignUpdateModal(c) {
+    //     $("#upFullName").val(c.fullName);
+    //     $("#upEmail").val(c.email);
+    //     $("#upPhone").val(c.phone);
+    //     $('#upProvince option:selected').text(c.province_name);
+    //     $('#updateModal').modal('toggle');
+    // }
+
+    function updateCustomer() {
+        customer.fullName = $("#upFullName").val();
+        customer.email = $("#upEmail").val();
+        customer.phone = $("#upPhone").val();
+        customer.province_name = $("#upProvince option:selected").text();
+
+        $.ajax({
+            type: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            url: page.urls.saveEdit,
+            data: JSON.stringify(customer)
+        }).done( (resp) => {
+            customer = resp;
+            let row = $("#orderItems tbody").find('#' + $("#currentRow").val());
+            let updated_row = $(template(customer.id, customer.fullName, customer.email, customer.phone, customer.province_name));
+            row.replaceWith (updated_row);
+            $("#currentRow").val("");
+            $('#frmUpdateCustomer')[0].reset();
+            $("#frmUpdateCustomer").validate().resetForm();
+
+            App.showSuccessAlert("Data update successful !");
+        }).fail( () => {
+            App.showErrorAlert("An error occurred. Please try again later !");
+        });
+
+        $("#updateModal").modal('hide');
+    }
+
+    function deleteConfirm() {
+        App.showDeleteConfirmDialog()
+            .then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "DELETE",
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        // url: page.urls.deleteCustomer + "/" + customer.id,
+                        url: page.urls.deleteCustomer,
+                        data : JSON.stringify({
+                            id : customer.id,
+                        }) ,
+                        success() {
+                            App.showSuccessAlert("Delete data successfully!");
+                            $("#tr_" + customer.id).remove();
+                        },
+                        error() {
+                            App.showErrorAlert("An error occurred. Please try again later!");
+                        }
+                    });
+                }
+            });
+    }
+
+    $("#btnCreateCustomer").on("click", () => {
+        $("#frmCreateCustomer").submit();
+        // createCustomer();
+    });
+
+    $("#btnUpdateCustomer").on("click", () => {
+        $("#frmUpdateCustomer").submit();
+        // updateCustomer();
+    });
+
+    $("#orderItems").on("click", ".edit", function () {
+        customer.id = $(this).data('id');
+        $("#currentRow").val($(this).closest("tr").attr("id"));
+        showUpdateModal();
+    });
+
+    $("#orderItems").on("click", ".delete", function () {
+        customer.id = $(this).data('id');
+        deleteConfirm();
+    });
+
+    $('#updateModal').on('hidden.bs.modal', function () {
+        $('#frmUpdateCustomer')[0].reset();
+        $('#frmUpdateCustomer').validate().resetForm();
+    });
+
+    $("#province").on('change',function () {
+        getDistrict($("#province").val()).then(function () {
+            getWard($("#province_d").val());
+        });
+    })
+
+    $("#province_d").on('change',function () {
+        getWard($("#province_d").val());
+    })
+
+    function getInt(){
+        getProvinces().then(function () {
+            let province_id = $("#province").prop("selectedIndex",0).val();
+            getDistrict(province_id).then(function () {
+                let district_id = $("#province_d").prop("selectedIndex",0).val();
+                getWard(district_id);
+            })
+        })
+    }
+
+    $(document).ready(function () {
+        getCustomers();
+        getInt();
+    });
+
+</script>
+</body>
+</html>

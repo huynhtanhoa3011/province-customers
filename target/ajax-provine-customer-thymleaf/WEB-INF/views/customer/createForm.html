@@ -1,0 +1,38 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="frm-create">
+        <textarea style="display:none" id="tempOption">
+        <option value="{0}">{1}</option>
+    </textarea>
+    <form id="frmCreateCustomer">
+        <fieldset class="row g-3">
+            <legend>Customer information</legend>
+            <div class="col-md-6">
+                <label for="fullName" class="form-label">Full name</label>
+                <input type="text" class="form-control" id="fullName" name="fullName">
+            </div>
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email</label>
+                <input type="text" class="form-control" id="email" name="email">
+            </div>
+            <div class="col-md-3">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="text" class="form-control" id="phone" name="phone">
+            </div>
+            <div class="col-md-3">
+                <label for="province" class="form-label" >Province</label>
+                <select id="province" class="form-select" name="province"></select>
+            </div>
+            <div class="col-md-3">
+                <label for="province_d" class="form-label">District</label>
+                <select id="province_d" class="form-select" name="district"></select>
+            </div>
+            <div class="col-md-3">
+                <label for="province_w" class="form-label">Ward</label>
+                <select id="province_w" class="form-select" name="ward"></select>
+            </div>
+            <div class="col-md-12">
+                <input type="button" id="btnCreateCustomer" class="btn btn-outline-primary" value="Create customer">
+            </div>
+        </fieldset>
+    </form>
+</th:block>
